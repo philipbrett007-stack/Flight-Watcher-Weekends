@@ -1,17 +1,4 @@
-"""Candidate destination airports for the "cheapest anywhere" search.
-
-Google Flights has no public "explore every destination" API. A fully
-exhaustive search would mean scraping an unbounded, undocumented set of
-routes, which is both unreliable and the fastest way to get IP-blocked.
-Instead, this module holds a maintained list of the destinations actually
-served *directly* from Cork and Shannon (per the airlines that fly from
-each airport), and the tool finds the cheapest fare among those.
-
-This list will drift out of date as airlines add/drop seasonal routes —
-review and edit it periodically. IATA "country" here uses "IE" to mean
-the island of Ireland (Republic + Northern Ireland), since the user wants
-destinations outside Ireland altogether, not just outside the Republic.
-"""
+"""Candidate destination airports for Cork and Shannon UK-only searches."""
 
 from __future__ import annotations
 
@@ -22,11 +9,10 @@ from dataclasses import dataclass
 class Destination:
     iata: str
     city: str
-    country: str  # ISO alpha-2, or "IE" for the island of Ireland
+    country: str  # ISO alpha-2
 
 
-# All Irish airports (Republic + Northern Ireland) — always excluded from
-# candidate destination lists, regardless of what's listed below.
+# All Irish airports (always excluded from candidates)
 IRISH_AIRPORTS = {
     "DUB": Destination("DUB", "Dublin", "IE"),
     "ORK": Destination("ORK", "Cork", "IE"),
@@ -39,55 +25,29 @@ IRISH_AIRPORTS = {
     "LDY": Destination("LDY", "Derry", "IE"),
 }
 
-# Known direct destinations from Cork (ORK). Edit freely.
-CORK_DESTINATIONS: list[Destination] = [
-    Destination("LHR", "London", "GB"),
-    Destination("LGW", "London", "GB"),
-    Destination("STN", "London", "GB"),
+# Specified UK direct destinations from Shannon (SNN)
+SHANNON_DESTINATIONS: list[Destination] = [
+    Destination("LHR", "London Heathrow", "GB"),
+    Destination("LGW", "London Gatwick", "GB"),
+    Destination("STN", "London Stansted", "GB"),
     Destination("MAN", "Manchester", "GB"),
     Destination("BHX", "Birmingham", "GB"),
-    Destination("EDI", "Edinburgh", "GB"),
-    Destination("BRS", "Bristol", "GB"),
     Destination("LPL", "Liverpool", "GB"),
-    Destination("AMS", "Amsterdam", "NL"),
-    Destination("CDG", "Paris", "FR"),
-    Destination("BRU", "Brussels", "BE"),
-    Destination("FRA", "Frankfurt", "DE"),
-    Destination("MUC", "Munich", "DE"),
-    Destination("BER", "Berlin", "DE"),
-    Destination("BCN", "Barcelona", "ES"),
-    Destination("AGP", "Malaga", "ES"),
-    Destination("ALC", "Alicante", "ES"),
-    Destination("PMI", "Palma de Mallorca", "ES"),
-    Destination("FAO", "Faro", "PT"),
-    Destination("LIS", "Lisbon", "PT"),
-    Destination("OPO", "Porto", "PT"),
-    Destination("BGY", "Milan (Bergamo)", "IT"),
-    Destination("MXP", "Milan", "IT"),
-    Destination("FCO", "Rome", "IT"),
-    Destination("NCE", "Nice", "FR"),
-    Destination("KEF", "Reykjavik", "IS"),
-    Destination("LPA", "Gran Canaria", "ES"),
-    Destination("TFS", "Tenerife", "ES"),
-    Destination("ACE", "Lanzarote", "ES"),
-    Destination("FUE", "Fuerteventura", "ES"),
+    Destination("EDI", "Edinburgh", "GB"),
 ]
 
-# Known direct destinations from Shannon (SNN). Edit freely.
-SHANNON_DESTINATIONS: list[Destination] = [
-    Destination("STN", "London", "GB"),
-    Destination("LGW", "London", "GB"),
+# Specified UK direct destinations from Cork (ORK)
+CORK_DESTINATIONS: list[Destination] = [
+    Destination("LHR", "London Heathrow", "GB"),
+    Destination("LGW", "London Gatwick", "GB"),
+    Destination("LTN", "London Luton", "GB"),
+    Destination("STN", "London Stansted", "GB"),
     Destination("MAN", "Manchester", "GB"),
     Destination("BHX", "Birmingham", "GB"),
-    Destination("EDI", "Edinburgh", "GB"),
     Destination("LPL", "Liverpool", "GB"),
-    Destination("FAO", "Faro", "PT"),
-    Destination("ALC", "Alicante", "ES"),
-    Destination("AGP", "Malaga", "ES"),
-    Destination("PMI", "Palma de Mallorca", "ES"),
-    Destination("LPA", "Gran Canaria", "ES"),
-    Destination("TFS", "Tenerife", "ES"),
-    Destination("ACE", "Lanzarote", "ES"),
+    Destination("BRS", "Bristol", "GB"),
+    Destination("EDI", "Edinburgh", "GB"),
+    Destination("GLA", "Glasgow", "GB"),
 ]
 
 CANDIDATES_BY_ORIGIN: dict[str, list[Destination]] = {
@@ -97,8 +57,7 @@ CANDIDATES_BY_ORIGIN: dict[str, list[Destination]] = {
 
 
 def get_candidates(origin: str, exclude_countries: set[str]) -> list[Destination]:
-    """Candidate destinations for `origin`, with Irish airports and any
-    extra excluded countries filtered out."""
+    """Candidate destinations for `origin`, with Irish airports filtered out."""
     origin = origin.upper()
     pool = CANDIDATES_BY_ORIGIN.get(origin, [])
     exclude = {c.upper() for c in exclude_countries} | {"IE"}
