@@ -12,6 +12,22 @@ class Destination:
     country: str  # ISO alpha-2
 
 
+# Airport code lookup dictionary
+AIRPORT_NAMES = {
+    "ORK": "Cork",
+    "SNN": "Shannon",
+    "LHR": "London Heathrow",
+    "LGW": "London Gatwick",
+    "LTN": "London Luton",
+    "STN": "London Stansted",
+    "MAN": "Manchester",
+    "BHX": "Birmingham",
+    "LPL": "Liverpool",
+    "BRS": "Bristol",
+    "EDI": "Edinburgh",
+    "GLA": "Glasgow",
+}
+
 # All Irish airports (always excluded from candidates)
 IRISH_AIRPORTS = {
     "DUB": Destination("DUB", "Dublin", "IE"),
