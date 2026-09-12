@@ -12,7 +12,6 @@ from flight_source import GoogleFlightsSource
 from destinations import get_candidates, AIRPORT_NAMES
 from trip_dates import next_trip_dates
 
-# Configure page display for mobile & desktop web view
 st.set_page_config(
     page_title="UK Flight Watcher",
     page_icon="✈️",
@@ -28,7 +27,6 @@ def main() -> None:
     st.title("✈️ Google Flight Watcher (UK Routes)")
     st.write("Track low-cost direct flight prices from Cork and Shannon to the UK.")
 
-    # Load configuration settings
     try:
         settings = load_settings()
         source = GoogleFlightsSource(
@@ -41,7 +39,6 @@ def main() -> None:
         st.error(f"Error loading configuration: {e}")
         return
 
-    # Web Dashboard Sidebar Controls
     st.sidebar.header("Flight Search Settings")
     st.sidebar.write(f"**Origins:** {', '.join(settings.search.origin_airports)}")
     st.sidebar.write(f"**Currency:** {settings.search.currency}")
@@ -59,44 +56,26 @@ def main() -> None:
 
         all_results = []
         
-        # Calculate total candidates for progress bar tracking
-        total_tasks = sum(
-            len(get_candidates(origin, set(settings.search.exclude_countries)))
-            for origin in settings.search.origin_airports
-        )
-        
-        progress_bar = st.progress(0.0)
-        status_text = st.empty()
-        current_step = 0
-
         for origin in settings.search.origin_airports:
             origin_name = AIRPORT_NAMES.get(origin, origin)
             candidates = get_candidates(origin, set(settings.search.exclude_countries))
-
-            for dest in candidates:
-                current_step += 1
-                progress = current_step / max(total_tasks, 1)
-                status_text.text(f"Checking {origin_name} ({origin}) → {dest.city} ({dest.iata})... [{current_step}/{total_tasks}]")
-                
-                # Fetch route
+            
+            with st.spinner(f"Pacing requests to query {len(candidates)} routes from {origin_name}..."):
                 try:
                     res = source.search_cheapest_direct(
                         origin=origin,
                         origin_name=origin_name,
                         date_out=date_out,
                         date_back=date_back,
-                        candidates=[dest]
+                        candidates=candidates
                     )
                     if res:
                         all_results.extend(res)
                 except Exception as err:
-                    st.warning(f"Could not check {origin} to {dest.iata}: {err}")
+                    st.warning(f"Error querying {origin_name}: {err}")
 
-                progress_bar.progress(progress)
+        st.success("Search complete!")
 
-        status_text.success("Search complete!")
-
-        # Display Output Table
         if all_results:
             st.subheader("Cheapest Direct UK Flights Found")
             
@@ -113,7 +92,7 @@ def main() -> None:
             df = pd.DataFrame(table_data)
             st.dataframe(df, use_container_width=True)
         else:
-            st.warning("No direct flights found for the selected dates.")
+            st.warning("No direct flights found. Google may be temporarily throttling rapid automated queries.")
 
 if __name__ == "__main__":
     main()
